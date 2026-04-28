@@ -18,8 +18,8 @@ public class RezeptService
             return new RezeptErgebnis
             {
                 ErfolgreichGespeichert = false,
-                Warnung = "Patient is allergic to Penicillin-class antibiotics",
-                WarnungSchweregrad = "HIGH"
+                Warnung = "Patient ist allergisch gegen Penicillin-Klasse-Antibiotika",
+                WarnungSchweregrad = "HOCH"
             };
         }
 
@@ -30,9 +30,9 @@ public class RezeptService
             return new RezeptErgebnis
             {
                 ErfolgreichGespeichert = false,
-                Warnung = "Increased bleeding risk with Warfarin",
-                WarnungSchweregrad = "HIGH",
-                Vorschlag = "consider alternative: Paracetamol"
+                Warnung = "Erhöhtes Blutungsrisiko mit Warfarin",
+                WarnungSchweregrad = "HOCH",
+                Vorschlag = "Alternative in Betracht ziehen: Paracetamol"
             };
         }
 

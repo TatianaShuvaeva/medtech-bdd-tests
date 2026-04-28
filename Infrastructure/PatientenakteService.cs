@@ -17,14 +17,14 @@ public class PatientenakteService
         var durchschnittDiastolisch = sortiert.Average(m => m.Diastolisch);
 
         var trend = sortiert[^1].Systolisch > sortiert[0].Systolisch
-            ? "RISING"
+            ? "STEIGEND"
             : sortiert[^1].Systolisch < sortiert[0].Systolisch
-                ? "FALLING"
-                : "STABLE";
+                ? "FALLEND"
+                : "STABIL";
 
         var klinischerHinweis = durchschnittSystolisch >= 140 || durchschnittDiastolisch >= 90
-            ? "Hypertension Stage 1"
-            : "No clinical alert";
+            ? "Hypertonie Stufe 1"
+            : "Kein klinischer Hinweis";
 
         return new BlutdruckAnalyseErgebnis
         {
