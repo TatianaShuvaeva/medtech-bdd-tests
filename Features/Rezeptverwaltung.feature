@@ -1,31 +1,32 @@
+@medikation @sicherheit @regression
 Feature: Medikamentenverschreibung
-  As a treating physician
-  I want to prescribe medication safely
-  So that patients receive correct treatment without harmful interactions
+  Als behandelnder Arzt
+  Möchte ich Medikamente sicher verschreiben
+  Damit Patienten die richtige Behandlung ohne schädliche Wechselwirkungen erhalten
 
   Background:
-    Given Dr. Weber is logged into the system
-    And a patient "Maria Hoffmann" (ID: "P-4421") is open
+    Given Dr. Weber ist im System angemeldet
+    And Patient "Maria Hoffmann" (ID: "P-4421") ist geöffnet
 
-  @smoke @positive
-  Scenario: Successful medication prescription
-    When Dr. Weber prescribes "Ibuprofen 400mg" twice daily
-    Then the prescription should be saved
-    And the medication should appear in the patient's active medications
-    And a prescription PDF should be generated
+  @audit-relevant @smoke @kritisch @positive
+  Scenario: Erfolgreiche Medikamentenverschreibung
+    When Dr. Weber "Ibuprofen 400mg" zweimal täglich verschreibt
+    Then sollte das Rezept gespeichert werden
+    And das Medikament sollte in den aktiven Medikamenten des Patienten erscheinen
+    And eine Rezept-PDF sollte generiert werden
 
-  @safety @allergy
-  Scenario: Warning for known patient allergy
-    Given patient "Maria Hoffmann" has a documented allergy to "Penicillin"
-    When Dr. Weber tries to prescribe "Amoxicillin"
-    Then a red allergy warning should appear: "Patient is allergic to Penicillin-class antibiotics"
-    And the prescription should NOT be saved automatically
-    And Dr. Weber must confirm override with a reason
+  @sicherheit @allergie @negativ
+  Scenario: Warnung bei bekannter Patientenallergie
+    Given Patient "Maria Hoffmann" hat eine dokumentierte Allergie gegen "Penicillin"
+    When Dr. Weber versucht "Amoxicillin" zu verschreiben
+    Then sollte eine rote Allergie-Warnung erscheinen: "Patient ist allergisch gegen Penicillin-Klasse-Antibiotika"
+    And das Rezept sollte NICHT automatisch gespeichert werden
+    And Dr. Weber muss die Überschreibung mit einem Grund bestätigen
 
-  @safety @interaction
-  Scenario: Drug interaction warning
-    Given patient "Maria Hoffmann" is currently taking "Warfarin"
-    When Dr. Weber prescribes "Aspirin 100mg"
-    Then an interaction warning should appear: "Increased bleeding risk with Warfarin"
-    And the severity should be marked as "HIGH"
-    And the system should suggest "consider alternative: Paracetamol"
+  @sicherheit @wechselwirkung
+  Scenario: Warnung bei Medikamentenwechselwirkung
+    Given Patient "Maria Hoffmann" nimmt aktuell "Warfarin" ein
+    When Dr. Weber "Aspirin 100mg" verschreibt
+    Then sollte eine Wechselwirkungs-Warnung erscheinen: "Erhöhtes Blutungsrisiko mit Warfarin"
+    And der Schweregrad sollte als "HOCH" markiert sein
+    And das System sollte "Alternative in Betracht ziehen: Paracetamol" vorschlagen
