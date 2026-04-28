@@ -17,7 +17,7 @@ public class PatientenakteSteps
         _db = db;
     }
 
-    [Given("patient {string} has blood pressure readings:")]
+    [Given("Patient {string} hat folgende Blutdruckmessungen:")]
     public void GivenPatientHasBloodPressureReadings(string name, Table table)
     {
         var patient = new Patient
@@ -34,9 +34,9 @@ public class PatientenakteSteps
         var messungen = table.Rows
             .Select(row => new BlutdruckMessung
             {
-                Datum = DateOnly.ParseExact(row["Date"], "yyyy-MM-dd", CultureInfo.InvariantCulture),
-                Systolisch = int.Parse(row["Systolic"], CultureInfo.InvariantCulture),
-                Diastolisch = int.Parse(row["Diastolic"], CultureInfo.InvariantCulture)
+                Datum = DateOnly.ParseExact(row["Datum"], "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                Systolisch = int.Parse(row["Systolisch"], CultureInfo.InvariantCulture),
+                Diastolisch = int.Parse(row["Diastolisch"], CultureInfo.InvariantCulture)
             })
             .ToList();
 
@@ -44,7 +44,7 @@ public class PatientenakteSteps
         _context["BP.Readings"] = messungen;
     }
 
-    [When("the doctor opens the blood pressure chart")]
+    [When("der Arzt das Blutdruckdiagramm öffnet")]
     public void WhenTheDoctorOpensTheBloodPressureChart()
     {
         var messungen = _context.Get<List<BlutdruckMessung>>("BP.Readings");
@@ -54,21 +54,21 @@ public class PatientenakteSteps
         _context["BP.Result"] = ergebnis;
     }
 
-    [Then("the average systolic should be {int}")]
+    [Then("sollte der durchschnittliche Systolwert {int} betragen")]
     public void ThenTheAverageSystolicShouldBe(int erwartet)
     {
         var ergebnis = _context.Get<BlutdruckAnalyseErgebnis>("BP.Result");
         ergebnis.DurchschnittSystolisch.Should().Be(erwartet);
     }
 
-    [Then("the trend should be marked as {string}")]
+    [Then("der Trend sollte als {string} markiert sein")]
     public void ThenTheTrendShouldBeMarkedAs(string erwartet)
     {
         var ergebnis = _context.Get<BlutdruckAnalyseErgebnis>("BP.Result");
         ergebnis.Trend.Should().Be(erwartet);
     }
 
-    [Then("a clinical alert should be shown: {string}")]
+    [Then("ein klinischer Hinweis sollte angezeigt werden: {string}")]
     public void ThenAClinicalAlertShouldBeShown(string erwartet)
     {
         var ergebnis = _context.Get<BlutdruckAnalyseErgebnis>("BP.Result");
