@@ -11,6 +11,7 @@ public class TestDbContext : DbContext
     public DbSet<Arzt> Aerzte => Set<Arzt>();
     public DbSet<Patient> Patienten => Set<Patient>();
     public DbSet<Rezept> Rezepte => Set<Rezept>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

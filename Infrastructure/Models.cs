@@ -43,6 +43,21 @@ public class RezeptErgebnis
     public string PdfPfad { get; set; } = string.Empty;
 }
 
+public class AuditLog
+{
+    [Key]
+    public int Id { get; set; }
+
+    public DateTime ZeitpunktUtc { get; set; }
+    public string ArztName { get; set; } = string.Empty;
+    public string Aktion { get; set; } = string.Empty;
+    public string PatientName { get; set; } = string.Empty;
+    public string PatientId { get; set; } = string.Empty;
+    public string Medikament { get; set; } = string.Empty;
+    public string? Details { get; set; }
+    public string Szenario { get; set; } = string.Empty;
+}
+
 public class BlutdruckMessung
 {
     public DateOnly Datum { get; set; }
