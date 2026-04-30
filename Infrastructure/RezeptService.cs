@@ -2,45 +2,66 @@ namespace MedTech.Tests.Infrastructure;
 
 public class RezeptService
 {
-    private readonly TestDbContext _db;
+    private readonly IMedTechDbContext _db;
 
-    public RezeptService(TestDbContext db)
+    // Bekannte Kreuzallergien (Allergen → betroffene Medikamente)
+    private readonly Dictionary<string, string[]> _kreuzallergien = new()
     {
-        _db = db;
-    }
+        ["Penicillin"] = ["Amoxicillin", "Ampicillin", "Piperacillin"],
+        ["Sulfonamide"] = ["Trimethoprim-Sulfamethoxazol"]
+    };
 
-    public RezeptErgebnis VerschreibeMedikament(Patient patient, Arzt arzt, string medikament, string? dosierung)
+    // Bekannte Wechselwirkungen (aktives Medikament → gefährliche Kombinationen + Meldung)
+    private readonly Dictionary<string, (string[] Medikamente, string Warnung, string Vorschlag)> _interaktionen = new()
     {
-        // Allergie-Check (Kurs-Szenario: Penicillin -> Amoxicillin)
-        if (patient.Allergien.Any(a => a.Equals("Penicillin", StringComparison.OrdinalIgnoreCase)) &&
-            medikament.Contains("Amoxicillin", StringComparison.OrdinalIgnoreCase))
+        ["Warfarin"] = (["Aspirin", "Ibuprofen", "Naproxen"],
+            "Erhöhtes Blutungsrisiko mit Warfarin",
+            "Alternative in Betracht ziehen: Paracetamol"),
+        ["Metformin"] = (["Alkohol", "Röntgenkontrastmittel"],
+            "Erhöhte Laktatazidose-Gefahr mit Metformin", ""),
+        ["MAO-Hemmer"] = (["SSRI", "Tramadol", "Triptane"],
+            "Gefahr eines Serotoninsyndroms", "")
+    };
+
+    public RezeptService(IMedTechDbContext db) => _db = db;
+
+    public RezeptErgebnis VerschreibeMedikament(
+        Patient patient, Arzt arzt, string medikament, string? dosierung)
+    {
+        // 1. Allergie-Check
+        foreach (var allergen in patient.Allergien)
         {
-            return new RezeptErgebnis
+            if (_kreuzallergien.TryGetValue(allergen, out var kreuzallergene) &&
+                kreuzallergene.Any(k => medikament.Contains(k, StringComparison.OrdinalIgnoreCase)))
             {
-                ErfolgreichGespeichert = false,
-                Warnung = "Patient ist allergisch gegen Penicillin-Klasse-Antibiotika",
-                WarnungSchweregrad = "HOCH"
-            };
+                return new RezeptErgebnis
+                {
+                    ErfolgreichGespeichert = false,
+                    Warnung = $"Patient ist allergisch gegen {allergen}-Klasse-Antibiotika",
+                    WarnungSchweregrad = "HOCH"
+                };
+            }
         }
 
-        // Interaktions-Check (Kurs-Szenario: Warfarin + Aspirin)
-        if (patient.AktiveMedikamente.Any(m => m.Equals("Warfarin", StringComparison.OrdinalIgnoreCase)) &&
-            medikament.Contains("Aspirin", StringComparison.OrdinalIgnoreCase))
+        // 2. Wechselwirkungscheck
+        foreach (var aktivMedikament in patient.AktiveMedikamente)
         {
-            return new RezeptErgebnis
+            if (_interaktionen.TryGetValue(aktivMedikament, out var interaktion) &&
+                interaktion.Medikamente.Any(m => medikament.Contains(m, StringComparison.OrdinalIgnoreCase)))
             {
-                ErfolgreichGespeichert = false,
-                Warnung = "Erhöhtes Blutungsrisiko mit Warfarin",
-                WarnungSchweregrad = "HOCH",
-                Vorschlag = "Alternative in Betracht ziehen: Paracetamol"
-            };
+                return new RezeptErgebnis
+                {
+                    ErfolgreichGespeichert = false,
+                    Warnung = interaktion.Warnung,
+                    WarnungSchweregrad = "HOCH",
+                    Vorschlag = interaktion.Vorschlag
+                };
+            }
         }
 
-        // Erfolgreich speichern
+        // 3. Patient aktualisieren (aktive Medikamente)
         if (!patient.AktiveMedikamente.Contains(medikament, StringComparer.OrdinalIgnoreCase))
-        {
             patient.AktiveMedikamente.Add(medikament);
-        }
 
         var pdfPfad = $@"C:\Temp\rezepte\rezept_{patient.PatientId}_{DateTime.UtcNow:yyyyMMddHHmmss}.pdf";
 
@@ -56,6 +77,19 @@ public class RezeptService
 
         _db.Patienten.Update(patient);
         _db.Rezepte.Add(rezept);
+        _db.SaveChanges(); // rezept.Id wird hier gesetzt
+
+        // 4. Audit-Log (MDR-Pflicht: jede Verschreibung muss protokolliert werden)
+        _db.AuditLog.Add(new AuditLogEintrag
+        {
+            Aktion = "REZEPT_ERSTELLT",
+            Benutzer = arzt.Name,
+            Lizenznummer = arzt.Lizenznummer,
+            EntityTyp = "Rezept",
+            EntityId = rezept.Id,
+            Änderungen = $"Medikament: {medikament}, Dosierung: {dosierung}",
+            Zeitstempel = DateTime.UtcNow
+        });
         _db.SaveChanges();
 
         return new RezeptErgebnis
