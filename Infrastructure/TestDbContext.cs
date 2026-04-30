@@ -4,14 +4,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace MedTech.Tests.Infrastructure;
 
-public class TestDbContext : DbContext
+public class TestDbContext : DbContext, IMedTechDbContext
 {
     public TestDbContext(DbContextOptions<TestDbContext> options) : base(options) { }
 
     public DbSet<Arzt> Aerzte => Set<Arzt>();
     public DbSet<Patient> Patienten => Set<Patient>();
     public DbSet<Rezept> Rezepte => Set<Rezept>();
-    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Laborwert> Laborwerte => Set<Laborwert>();
+    public DbSet<AuditLogEintrag> AuditLog => Set<AuditLogEintrag>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
