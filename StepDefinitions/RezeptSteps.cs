@@ -26,16 +26,17 @@ public class RezeptSteps
 
     private bool IstAuditRelevant => _context.ScenarioInfo.Tags.Contains("audit-relevant");
 
-    [Given("Dr. Weber ist im System angemeldet")]
-    public void GegebenDrWeberIstEingeloggt()
+    [Given("Arzt {string} mit Lizenznummer {string} ist im System angemeldet")]
+    public void ArztMitLizenznummerEingeloggt(string name, string lizenznummer)
     {
-        // Arzt in InMemory-DB suchen/anlegen
-        var arzt = _db.Aerzte.FirstOrDefault(a => a.Name == "Dr. Weber")
-                   ?? new Arzt { Name = "Dr. Weber", Fachrichtung = "Allgemeinmedizin" };
-
+        var arzt = new Arzt
+        {
+            Name = name,
+            Fachrichtung = "Allgemeinmedizin",
+            Lizenznummer = lizenznummer
+        };
         _db.Aerzte.Add(arzt);
         _db.SaveChanges();
-
         _context["AktuellerArzt"] = arzt;
     }
 
@@ -73,9 +74,10 @@ public class RezeptSteps
         _db.SaveChanges();
     }
 
-    [When("Dr. Weber {string} zweimal täglich verschreibt")]
-    [When("Dr. Weber {string} verschreibt")]
-    public void WennDrWeberVerschreibt(string medikament)
+    [When("der aktuelle Arzt {string} verschreibt")]
+    [When("der aktuelle Arzt {string} zweimal täglich verschreibt")]
+    [When("der aktuelle Arzt {string} einmal täglich verschreibt")]
+    public void WennAktuellerArztVerschreibt(string medikament)
     {
         var patient = _context.Get<Patient>("AktuellerPatient");
         var arzt = _context.Get<Arzt>("AktuellerArzt");
@@ -103,10 +105,10 @@ public class RezeptSteps
         }
     }
 
-    [When("Dr. Weber versucht {string} zu verschreiben")]
-    public void WennDrWeberVersuchtZuVerschreiben(string medikament)
+    [When("der aktuelle Arzt versucht {string} zu verschreiben")]
+    public void WennAktuellerArztVersuchtZuVerschreiben(string medikament)
     {
-        WennDrWeberVerschreibt(medikament);
+        WennAktuellerArztVerschreibt(medikament);
     }
 
     [Then("sollte das Rezept gespeichert werden")]
@@ -135,7 +137,7 @@ public class RezeptSteps
             "Bei kritischen Wechselwirkungen muss eine Warnung erscheinen");
     }
 
-    [Then("Dr. Weber muss die Überschreibung mit einem Grund bestätigen")]
+    [Then("der Arzt muss die Überschreibung mit einem Grund bestätigen")]
     public void DannMussDrWeberOverrideBestaetigen()
     {
         _rezeptGespeichert.Should().BeFalse("ohne manuelle Override-Bestaetigung darf nicht gespeichert werden");
@@ -154,6 +156,30 @@ public class RezeptSteps
     {
         var ergebnis = _context.Get<RezeptErgebnis>("Ergebnis");
         ergebnis.Vorschlag.Should().Be(erwartet);
+    }
+
+    // Übung 5.1: Audit-Log
+
+    [Then("das Audit-Log sollte einen Eintrag enthalten:")]
+    public void DannSollteAuditLogEintragEnthalten(Table table)
+    {
+        var eintraege = _db.AuditLog.ToList();
+        eintraege.Should().NotBeEmpty("RezeptService muss einen Audit-Log-Eintrag erstellen (MDR-Pflicht)");
+
+        // Prüfe ob mindestens ein Eintrag alle Feldbedingungen der Tabelle erfüllt
+        var passenderEintrag = eintraege.FirstOrDefault(e =>
+            table.Rows.All(row => row["Feld"] switch
+            {
+                "Aktion"       => e.Aktion       == row["Wert"],
+                "Benutzer"     => e.Benutzer     == row["Wert"],
+                "Lizenznummer" => e.Lizenznummer == row["Wert"],
+                "EntityTyp"    => e.EntityTyp    == row["Wert"],
+                "EntityId"     => e.EntityId.ToString() == row["Wert"],
+                _              => throw new ArgumentException($"Unbekanntes Feld im Audit-Log: {row["Feld"]}")
+            }));
+
+        passenderEintrag.Should().NotBeNull(
+            "Kein Audit-Log-Eintrag gefunden, der allen Tabellenbedingungen entspricht");
     }
 
     [Then("das Medikament sollte in den aktiven Medikamenten des Patienten erscheinen")]
