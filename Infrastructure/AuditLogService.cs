@@ -2,12 +2,9 @@ namespace MedTech.Tests.Infrastructure;
 
 public class AuditLogService
 {
-    private readonly TestDbContext _db;
+    private readonly IMedTechDbContext _db;
 
-    public AuditLogService(TestDbContext db)
-    {
-        _db = db;
-    }
+    public AuditLogService(IMedTechDbContext db) => _db = db;
 
     public void LogPrescription(
         Arzt arzt,
@@ -16,19 +13,19 @@ public class AuditLogService
         string? details,
         string szenario)
     {
-        var eintrag = new AuditLog
+        var eintrag = new AuditLogEintrag
         {
-            ZeitpunktUtc = DateTime.UtcNow,
-            ArztName = arzt.Name,
+            Zeitstempel = DateTime.UtcNow,
+            Benutzer = arzt.Name,
             Aktion = "Medikament verschrieben",
-            PatientName = patient.Name,
-            PatientId = patient.PatientId,
-            Medikament = medikament,
-            Details = details,
-            Szenario = szenario
+            EntityTyp = "Rezept",
+            EntityId = 0,
+            Änderungen = $"Patient: {patient.Name} ({patient.PatientId}), " +
+                         $"Medikament: {medikament}, Szenario: {szenario}" +
+                         (details != null ? $", Details: {details}" : "")
         };
 
-        _db.AuditLogs.Add(eintrag);
+        _db.AuditLog.Add(eintrag);
         _db.SaveChanges();
     }
 }
