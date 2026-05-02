@@ -1,0 +1,136 @@
+@page "/patienten"
+@rendermode InteractiveServer
+@inject MedTechDemoService DemoService
+
+<PageTitle>Patientenliste</PageTitle>
+
+<section style="margin-bottom: 1.5rem; padding: 1rem; background: #eef6ff; border: 1px solid #c8def7; border-radius: 8px;">
+    <h2 style="margin-top: 0;">Patientenliste</h2>
+    <p style="margin-bottom: 0.5rem;">
+        Diese Demo-Seite ist das Ziel für Tag 6 im BDD-Kurs. Playwright ruft genau diese Route auf und interagiert
+        ausschließlich über stabile <code>data-testid</code>-Attribute.
+    </p>
+    <p style="margin-bottom: 0; color: #234;">
+        Probiere zum Beispiel <strong>Schmidt</strong>, <strong>Anna Klein</strong> oder <strong>Max Müller</strong>.
+    </p>
+</section>
+
+<!-- Suche -->
+<div style="margin-bottom:1rem;">
+    <input data-testid="patient-search-input"
+           type="text"
+           placeholder="Patient suchen..."
+           @bind="suchbegriff"
+           @bind:event="oninput"
+           style="width:300px; padding:6px;" />
+</div>
+
+<!-- Suchergebnisse -->
+@foreach (var patient in GefiltertePatienten())
+{
+    <div data-testid="patient-result-item"
+         @onclick="() => ÖffnePatient(patient)"
+         style="cursor:pointer; padding:8px; border:1px solid #ccc; margin-bottom:4px; border-radius:4px;">
+        @patient.Name — @patient.PatientId
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(suchbegriff) && !GefiltertePatienten().Any())
+{
+    <div data-testid="error-message" style="color:red;">Kein Patient gefunden.</div>
+}
+
+<!-- Patientenakte -->
+@if (aktuellerPatient != null)
+{
+    <div data-testid="patient-record" style="margin-top:1.5rem; border:2px solid #333; padding:1rem; border-radius:6px;">
+        <h3>Patientenakte: @aktuellerPatient.Name</h3>
+        <p>ID: @aktuellerPatient.PatientId</p>
+        <p>Allergien: @(aktuellerPatient.Allergien.Any() ? string.Join(", ", aktuellerPatient.Allergien) : "keine")</p>
+
+        <hr />
+        <h4>Rezept ausstellen</h4>
+
+        <div style="margin-bottom:8px;">
+            <label>Medikament:</label><br />
+            <input data-testid="medication-input"
+                   type="text"
+                   @bind="medikament"
+                   style="width:250px; padding:5px;" />
+        </div>
+        <div style="margin-bottom:8px;">
+            <label>Dosierung:</label><br />
+            <input data-testid="dosage-input"
+                   type="text"
+                   @bind="dosierung"
+                   style="width:250px; padding:5px;" />
+        </div>
+
+        <button data-testid="prescribe-button"
+                @onclick="Verschreiben"
+                style="padding:8px 16px; background:#0078d4; color:white; border:none; border-radius:4px; cursor:pointer;">
+            Verschreiben
+        </button>
+
+        <!-- Allergie-Warnung -->
+        @if (allergieWarnung != null)
+        {
+            <div data-testid="allergy-warning"
+                 style="margin-top:1rem; padding:12px; background:#ffe0e0; border:2px solid red; border-radius:4px; color:red;">
+                <strong>⚠️ ALLERGIE-WARNUNG:</strong> @allergieWarnung
+                <br />
+                Schweregrad: <span data-testid="warning-severity">@warnungSchweregrad</span>
+            </div>
+        }
+
+        <!-- Erfolgsmeldung -->
+        @if (erfolgsMeldung != null)
+        {
+            <div data-testid="success-message"
+                 style="margin-top:1rem; padding:12px; background:#d4edda; border:2px solid green; border-radius:4px; color:green;">
+                ✅ @erfolgsMeldung
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private string suchbegriff = string.Empty;
+    private DemoPatient? aktuellerPatient;
+    private string medikament = string.Empty;
+    private string dosierung = string.Empty;
+    private string? allergieWarnung;
+    private string warnungSchweregrad = string.Empty;
+    private string? erfolgsMeldung;
+
+    private IReadOnlyList<DemoPatient> GefiltertePatienten()
+    {
+        return DemoService.SuchePatienten(suchbegriff);
+    }
+
+    private void ÖffnePatient(DemoPatient patient)
+    {
+        aktuellerPatient = patient;
+        medikament = string.Empty;
+        dosierung = string.Empty;
+        allergieWarnung = null;
+        erfolgsMeldung = null;
+        warnungSchweregrad = string.Empty;
+    }
+
+    private void Verschreiben()
+    {
+        allergieWarnung = null;
+        erfolgsMeldung = null;
+
+        if (aktuellerPatient is null)
+        {
+            return;
+        }
+
+        var ergebnis = DemoService.Verschreibe(aktuellerPatient.PatientId, medikament, dosierung);
+        allergieWarnung = ergebnis.AllergieWarnung;
+        warnungSchweregrad = ergebnis.WarnungSchweregrad;
+        erfolgsMeldung = ergebnis.Erfolgsmeldung;
+    }
+}

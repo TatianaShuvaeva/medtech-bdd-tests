@@ -72,6 +72,12 @@ In einem Rezept-Feature bedeutet das:
 
 ## 📘 TAG 1A — BDD-Grundidee im MedTech-Kontext
 
+### 1A.0 Was du heute lernst und warum
+
+Bevor du Tools oder Syntax lernst, brauchst du ein klares Bild davon, **warum** BDD überhaupt eingesetzt wird. An diesem Tag geht es darum, die Denkweise hinter dem Ansatz zu verstehen: Du beschreibst nicht primär Code, sondern fachliches Verhalten, das für Ärzte, QM und Entwicklung gemeinsam verständlich ist.
+
+Das ist wichtig, weil gute BDD-Tests in MedTech nicht nur Fehler finden sollen. Sie dienen auch als gemeinsame Sprache zwischen Fachseite und Technik und helfen dabei, regulatorisch relevante Anforderungen nachvollziehbar zu dokumentieren.
+
 ### 1A.1 Was ist BDD überhaupt?
 
 **BDD (Behavior-Driven Development)** bedeutet: Du beschreibst das erwartete Verhalten eines Systems aus Sicht der Fachseite, also aus Sicht von Arzt, Pflegekraft, Patient oder QM. Du beschreibst **nicht zuerst die technische Implementierung**.
@@ -120,9 +126,21 @@ Der Unterschied ist wichtig: Die zweite Formulierung beschreibt Verhalten. Die e
 
 Wenn dein Schritt eher nach HTML, CSS, XPath oder API-Endpunkt klingt, ist er meist zu technisch. Wenn dein Schritt wie ein Satz aus dem Arbeitsalltag einer Praxis klingt, bist du näher an gutem BDD.
 
+### 1A.5 Tageszusammenfassung
+
+Heute hast du verstanden, was BDD im Kern bedeutet: fachliches Verhalten so zu beschreiben, dass es für technische und nicht-technische Beteiligte lesbar bleibt.
+
+Du hast außerdem gesehen, warum das gerade im MedTech-Kontext wichtig ist: Tests sind hier nicht nur Qualitätswerkzeug, sondern oft auch Teil von Nachvollziehbarkeit, Kommunikation und Audit-Vorbereitung.
+
 ---
 
 ## 📘 TAG 1B — Reqnroll, Projektaufbau und reqnroll.json
+
+### 1B.0 Was du heute lernst und warum
+
+Heute klärst du die technische Grundlage des Kurses. Du lernst, welche Rolle Reqnroll im Test-Stack übernimmt, wie das Projekt organisiert ist und warum die Konfiguration in `reqnroll.json` so wichtig für Sprache, Parsing und Debugging ist.
+
+Das Ziel dieses Tages ist nicht, sofort alles auswendig zu können. Du sollst verstehen, **welcher Baustein wofür zuständig ist**, damit die spätere Arbeit mit Features, Steps und Hooks nicht wie einzelne lose Fragmente wirkt.
 
 ### 1B.1 Was ist Reqnroll?
 
@@ -161,7 +179,17 @@ MedTech.Tests/
 
 ### 1B.3 Welche Pakete brauchst du am Anfang wirklich?
 
-Für den Einstieg musst du nicht alles sofort tief verstehen. Es reicht, grob zu wissen, warum ein Paket existiert.
+Das Projekt enthält alle Pakete, die im Verlauf des Kurses gebraucht werden. Du musst sie nicht alle sofort verstehen — merke dir, **wann** jedes Paket relevant wird:
+
+| Paket | Ab Tag | Zweck |
+|-------|--------|-------|
+| `Reqnroll` + `Reqnroll.NUnit` | Tag 1 | BDD-Framework, Kernkomponente |
+| `NUnit`, `NUnit3TestAdapter`, `Microsoft.NET.Test.Sdk` | Tag 1 | Test-Runner |
+| `FluentAssertions` | Tag 2 | Lesbare Assertions (`.Should().Be()`) |
+| `Microsoft.EntityFrameworkCore.InMemory` | Tag 5 | InMemory-Datenbank für isolierte Tests |
+| `RestSharp`, `Newtonsoft.Json` | Tag 8 | REST-API-Tests |
+| `Microsoft.AspNetCore.Mvc.Testing` | Tag 8 | Blazor-App lokal als Test-Host starten |
+| `Microsoft.Playwright` | Tag 6 | Browser-Automatisierung |
 
 ```xml
 <!-- MedTech.Tests.csproj -->
@@ -173,32 +201,26 @@ Für den Einstieg musst du nicht alles sofort tief verstehen. Es reicht, grob zu
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Reqnroll + NUnit-Anbindung -->
+    <!-- ✅ Tag 1–2: BDD-Kern + Test-Runner + Assertions -->
     <PackageReference Include="Reqnroll" Version="2.1.0" />
     <PackageReference Include="Reqnroll.NUnit" Version="2.1.0" />
-
-    <!-- Test-Framework -->
     <PackageReference Include="NUnit" Version="4.1.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
-
-    <!-- Assertions -->
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
 
-    <!-- UI-Tests -->
-    <PackageReference Include="Microsoft.Playwright" Version="1.42.0" />
-    <PackageReference Include="Microsoft.Playwright.NUnit" Version="1.42.0" />
-
-    <!-- InMemory-Datenbank für Tests -->
+    <!-- ✅ Tag 5: InMemory-Datenbank -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
 
-    <!-- API-Tests -->
+    <!-- ✅ Tag 8: API-Tests + lokaler Test-Host -->
     <PackageReference Include="RestSharp" Version="110.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-
-    <!-- Blazor Test-Host -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.0" />
+
+    <!-- ✅ Tag 6: Browser-Tests -->
+    <PackageReference Include="Microsoft.Playwright" Version="1.42.0" />
+    <PackageReference Include="Microsoft.Playwright.NUnit" Version="1.42.0" />
   </ItemGroup>
 </Project>
 ```
@@ -234,30 +256,25 @@ Die Datei `reqnroll.json` ist die zentrale Konfigurationsdatei für Reqnroll. Si
 | `bindingCulture.name` | Kultur für Zahlen und Datumswerte | `1,5` wird in deutscher Kultur korrekt geparst |
 | `trace.traceSuccessfulSteps` | Loggt auch erfolgreiche Steps | Hilfreich beim Lernen und Debuggen |
 
-> **Wichtig:** Wenn du deutsche Feature-Dateien schreibst, sollte meistens auch `bindingCulture` auf `de-DE` stehen. Sonst können Zahlenformate wie `1,5` Probleme machen.
+> **Wichtig:** Wenn du deutsche Feature-Dateien schreibst, sollte meistens auch `bindingCulture` auf `de-DE` stehen. Sonst können Zahlenformate wie `1,5` zu Parsefehlern führen.
 
-**Gute Startkonfiguration für diesen Kurs:**
+Die oben gezeigte Konfiguration deckt alle drei Aspekte ab und ist die empfohlene Startkonfiguration für diesen Kurs.
 
-```json
-{
-  "$schema": "https://schemas.reqnroll.net/reqnroll-config-latest.json",
-  "language": {
-    "feature": "de-DE"
-  },
-  "bindingCulture": {
-    "name": "de-DE"
-  },
-  "trace": {
-    "traceSuccessfulSteps": true
-  }
-}
-```
+### 1B.5 Tageszusammenfassung
 
-Damit ist der Anfang konsistent: deutsche Schlüsselwörter, deutsches Zahlenformat, gut lesbare Logs.
+Heute hast du die technische Basis des Kurses aufgebaut: Reqnroll als BDD-Framework eingeordnet, die Ordnerstruktur verstanden und die wichtigsten Pakete einem Zweck zugeordnet.
+
+Außerdem ist klar, warum `reqnroll.json` zentral ist: Die Datei steuert Sprache, Kultur und Logging und sorgt dafür, dass deine Feature-Dateien und deine Testausführung zusammenpassen.
 
 ---
 
 ## 📘 TAG 1C — Gherkin auf Deutsch lesen und schreiben
+
+### 1C.0 Was du heute lernst und warum
+
+Heute geht es um die Sprache von BDD: **Gherkin**. Du lernst, wie Features, Grundlagen und Szenarien aufgebaut sind und wie du fachliche Anforderungen so formulierst, dass sie für Menschen verständlich bleiben und später trotzdem automatisiert werden können.
+
+Das ist entscheidend, weil schlechte Gherkin-Szenarien häufig zu technischen, schwer wartbaren Tests führen. Gute Gherkin-Texte helfen dir dagegen, Verhalten sauber zu schneiden, Wiederverwendung zu fördern und Diskussionen mit Fachbereichen zu vereinfachen.
 
 ### 1C.1 Ein minimales Feature lesen
 
@@ -375,9 +392,23 @@ Funktionalität: Medikamentenverschreibung
 ```
 </details>
 
+### 1C.6 Tageszusammenfassung
+
+Heute hast du gelernt, Gherkin-Strukturen zu lesen und selbst erste fachlich formulierte Szenarien zu schreiben.
+
+Wichtig ist dabei der Unterschied zwischen Fachsprache und Implementierungsdetails: Ein gutes Szenario beschreibt, **was** der Arzt oder das System tun soll, nicht **welchen Button** oder **welchen Selektor** der Test intern verwendet.
+
 ---
 
 ## 📘 TAG 2 — Step Definitions in C#
+
+### 2.0 Was du heute lernst und warum
+
+Heute verbindest du Fachsprache mit ausführbarem Code. **Step Definitions** sind die Übersetzungsschicht zwischen den Gherkin-Sätzen in der Feature-Datei und dem C#-Code, der tatsächlich Testdaten anlegt, Services aufruft und Ergebnisse prüft.
+
+Das ist einer der wichtigsten Tage des Kurses, weil hier aus Text echte Automatisierung wird. Du lernst außerdem, warum sauber benannte, wiederverwendbare Steps langfristig viel wertvoller sind als viele fast gleiche Speziallösungen.
+
+> **Hinweis zur Sprache:** Die Step-Texte in den folgenden Code-Beispielen sind auf Englisch (`"Dr. Weber is logged into the system"`), obwohl `reqnroll.json` auf `de-DE` konfiguriert ist. Das ist kein Widerspruch: `language.feature` steuert nur die Gherkin-**Schlüsselwörter** (`Angenommen`, `Wenn`, `Dann`) — nicht den frei formulierten Schritttext. Ob dein Team englische oder deutsche Schritttexte verwendet, ist eine Teamentscheidung. Wichtig ist nur **Konsistenz im Projekt**.
 
 ### 2.1 Grundaufbau
 
@@ -406,6 +437,13 @@ public class RezeptSteps
         _context = context;
         _db = db;
     }
+
+    // -------------------------------------------------------
+    // Hinweis: _context["Schlüssel"] = wert ist der einfachste
+    // Einstieg, aber untypisiert (String-Keys, mögliche
+    // Laufzeitfehler). In komplexeren Projekten besser eine
+    // typisierte Kontextklasse nutzen → siehe Tag 11.3.
+    // -------------------------------------------------------
 
     [Given(@"Dr\. Weber is logged into the system")]
     public void GegebenDrWeberIstEingeloggt()
@@ -561,9 +599,61 @@ Scenario: Doctor views patient's blood pressure history
   And a clinical alert should be shown: "Hypertension Stage 1"
 ```
 
+### 2.3 Debugging — Wenn ein Step nicht gefunden wird
+
+Eine der häufigsten Anfängerhürden: Reqnroll findet keine passende Step Definition für einen Gherkin-Schritt. Die Fehlermeldung sieht so aus:
+
+```
+No matching step definition found for the step "Dr. Weber ist im System eingeloggt"
+```
+
+**Warum passiert das?**
+
+- Tippfehler zwischen Feature-Text und `[Given]`-Muster
+- Regex-Sonderzeichen nicht escaped (Punkt in `Dr.` → muss `Dr\.` heißen)
+- `[Binding]`-Attribut fehlt an der Klasse
+- Step-Klasse liegt in einem anderen Assembly als das Testprojekt
+
+**Reqnroll generiert automatisch einen Code-Stub**, den du als Ausgangspunkt kopieren kannst:
+
+```csharp
+// Generierter Stub in der Konsolenausgabe:
+[Given(@"Dr\. Weber ist im System eingeloggt")]
+public void GegebenDrWeberIstImSystemEingeloggt()
+{
+    throw new PendingStepException();
+}
+```
+
+**Checkliste bei "No matching step definition":**
+
+```
+□ Stimmt der Text in .feature exakt mit dem Muster in [Given/When/Then] überein?
+□ Ist die Klasse mit [Binding] dekoriert?
+□ Bei Regex: Sind Sonderzeichen escaped? (Dr\. statt Dr.)
+□ Bei Cucumber Expressions: {string} für "Text in Anführungszeichen" nutzen
+□ traceSuccessfulSteps: true gesetzt? → zeigt, welche Steps laufen und wo es stoppt
+```
+
+> **Tipp:** `dotnet test --logger "console;verbosity=detailed"` gibt alle ausgeführten Steps in der Konsole aus — hilfreich beim ersten Debugging.
+
+### 2.4 Tageszusammenfassung
+
+Heute hast du verstanden, welche Aufgabe Step Definitions im BDD-Stack haben: Sie binden Gherkin-Schritte an C#-Methoden und machen fachliche Szenarien testbar.
+
+Außerdem hast du gesehen, warum Cucumber Expressions oft besser lesbar als Regex sind und warum ein klarer Szenariozustand entscheidend ist, damit Steps konsistent zusammenarbeiten.
+
 ---
 
 ## 📘 TAG 3 — Hooks, Backgrounds & Tags
+
+### 3.0 Was du heute lernst und warum
+
+Heute geht es um die Struktur um die Tests herum. **Hooks** sind vorbereitende oder nachgelagerte Aktionen, die automatisch vor oder nach Tests laufen, zum Beispiel Datenbanken initialisieren, Browser starten oder Fehler protokollieren. Du nutzt sie, um wiederkehrende technische Arbeit aus den Szenarien herauszuhalten.
+
+**Backgrounds** beschreiben gemeinsame fachliche Vorbedingungen, die für mehrere Szenarien gelten. **Tags** sind Markierungen wie `@smoke`, `@browser` oder `@regulatorisch`. Damit kannst du Szenarien gruppieren, gezielt ausführen, Hooks nur für bestimmte Testarten aktivieren und Tests in CI/CD-Pipelines filtern.
+
+Kurz gesagt: Heute lernst du, wie eine Test-Suite nicht nur funktioniert, sondern auch **organisiert, wartbar und steuerbar** wird.
 
 ### 3.1 Hooks
 
@@ -650,7 +740,41 @@ public class DatabaseHooks
 }
 ```
 
-### 3.2 Tags in MedTech
+### 3.2 Background — gemeinsame Vorbedingungen
+
+Ein `Background` (`Grundlage:` auf Deutsch) enthält Schritte, die vor **jedem** Szenario in der Feature-Datei ausgeführt werden. Es ist das Gherkin-Äquivalent eines `[SetUp]` in NUnit — aber in fachlicher Sprache formuliert.
+
+**Wann Background, wann Hook?**
+
+| | `Grundlage:` (Background) | Hook (`[BeforeScenario]`) |
+|--|--------------------------|--------------------------|
+| Wo | `.feature`-Datei | C#-Klasse |
+| Sprache | Gherkin (fachlich lesbar) | C# (technisch) |
+| Sichtbar für Fachseite? | ✅ Ja | ❌ Nein |
+| Geeignet für | Fachliche Vorbedingungen | Technisches Setup (DB, Browser) |
+
+```gherkin
+Funktionalität: Medikamentenverschreibung
+
+  Grundlage:
+    Angenommen Dr. Weber ist im System eingeloggt
+    Und die Akte von Patientin "Maria Hoffmann" ist geöffnet
+
+  Szenario: Erfolgreiche Verschreibung
+    # Die beiden Grundlage-Steps laufen hier zuerst, dann dieser Step:
+    Wenn Dr. Weber "Ibuprofen 400 mg" verschreibt
+    Dann sollte das Rezept gespeichert werden
+
+  Szenario: Allergiewarnung bei Penicillin
+    # Die Grundlage-Steps laufen erneut — frischer, isolierter Zustand
+    Angenommen Patientin "Maria Hoffmann" hat eine Allergie gegen "Penicillin"
+    Wenn Dr. Weber "Amoxicillin" verschreibt
+    Dann sollte eine Allergiewarnung erscheinen
+```
+
+> **Wichtig:** Der Background gilt für **alle** Szenarien der Datei. Wenn eine Vorbedingung nur für bestimmte Szenarien gilt, schreib sie direkt als `Angenommen`-Schritt ins jeweilige Szenario.
+
+### 3.3 Tags in MedTech
 
 ```gherkin
 @medikation @sicherheit @regression
@@ -722,9 +846,21 @@ dotnet test --filter "Category=regulatorisch"
 dotnet test --filter "Category!=wip"
 ```
 
+### 3.4 Tageszusammenfassung
+
+Heute hast du gelernt, dass Hooks technische Vor- und Nachbereitung automatisch übernehmen, damit deine Szenarien fachlich lesbar bleiben.
+
+Du hast außerdem verstanden, dass Backgrounds gemeinsame fachliche Ausgangslagen beschreiben, während Hooks für technisches Setup (DB, Browser) zuständig sind. Tags dienen zur Organisation: für Testfilter, für unterschiedliche Testtypen und für spezielle Automatisierung in lokalen Läufen oder in CI/CD.
+
 ---
 
 ## 📘 TAG 4 — Scenario Outline & Data Tables
+
+### 4.0 Was du heute lernst und warum
+
+Heute geht es darum, wiederkehrende Testfälle mit unterschiedlichen Daten sauber zu modellieren. Ein **Scenario Outline** ist sinnvoll, wenn derselbe fachliche Ablauf mit mehreren Eingabewerten geprüft werden soll. **Data Tables** helfen dir, strukturierte Datensätze wie Laborwerte, Medikationslisten oder Vitaldaten lesbar direkt im Szenario zu erfassen.
+
+Das ist wichtig, weil medizinische Software fast immer mit vielen Varianten und vielen Datenpunkten arbeitet. Ohne diese Techniken würden Feature-Dateien schnell redundant, lang und schwer wartbar werden.
 
 ### 4.1 Scenario Outline — Dosierungsvalidierung
 
@@ -824,9 +960,21 @@ Erstelle ein `Scenario Outline` für die Validierung von Vitalwerten:
 | Sauerstoffsättigung | 98 | % | NORMAL |
 | Sauerstoffsättigung | 88 | % | KRITISCH — Hypoxie |
 
+### 4.3 Tageszusammenfassung
+
+Heute hast du gelernt, wann du Scenario Outlines statt vieler einzelner Szenarien einsetzen solltest und wie Examples-Tabellen Wiederholungen vermeiden.
+
+Zusätzlich hast du gesehen, wie Data Tables komplexe medizinische Eingabedaten übersichtlich machen und sich direkt in C#-Objekte oder Szenariokontext überführen lassen.
+
 ---
 
 ## 📘 TAG 5 — EF Core InMemory DB in Tests
+
+### 5.0 Was du heute lernst und warum
+
+Heute verschiebst du die Tests von reinem Logikcode auf eine realistischere Integrationsschicht. Mit **EF Core InMemory** kannst du Datenbankzugriffe und Persistenzverhalten in Tests simulieren, ohne einen echten SQL Server starten zu müssen.
+
+Das ist besonders nützlich, wenn du prüfen willst, ob Daten korrekt gespeichert, aktualisiert und für Folgeprüfungen wieder gelesen werden. Gleichzeitig lernst du auch die Grenzen dieses Ansatzes kennen, damit du InMemory sinnvoll einsetzt und nicht mit einer echten Datenbank verwechselst.
 
 ### 5.1 Domain-Modelle (MedTech)
 
@@ -884,6 +1032,17 @@ public class AuditLogEintrag
 ```
 
 ### 5.2 TestDbContext mit InMemory
+
+**Warum ein Interface?**
+
+Das `IMedTechDbContext`-Interface wendet das **Dependency Inversion Principle** an: Der `RezeptService` hängt von einer Abstraktion ab, nicht von der konkreten EF-Core-Klasse. Das ermöglicht den Austausch der Implementierung je nach Kontext:
+
+```
+RezeptService → IMedTechDbContext ← TestDbContext     (InMemory, isoliert, für Tests)
+                                  ← MedTechDbContext  (SQL Server, für Produktion)
+```
+
+Damit bleibt der `RezeptService` unverändert, egal ob im Test oder im echten System.
 
 > **Wichtige Einschränkung:** EF Core InMemory verhält sich nicht vollständig wie eine echte SQL Server- oder PostgreSQL-Datenbank. Constraints, Transaktionen und spezifisches SQL-Verhalten werden ignoriert. Das ist für isolierte Tests auf der Business-Logik-Ebene vollkommen in Ordnung — aber pass auf:
 >
@@ -1072,13 +1231,27 @@ Scenario: Audit log is created when prescription is issued
     | EntityTyp| Rezept            |
 ```
 
+### 5.4 Tageszusammenfassung
+
+Heute hast du verstanden, wie InMemory-Datenbanken Integrationstests vereinfachen und warum sie gut für isolierte, schnelle Tests geeignet sind.
+
+Außerdem hast du gelernt, wo die Grenzen liegen: InMemory hilft dir bei Geschäftslogik und Persistenzfluss, ersetzt aber keine echte relationale Datenbank für Constraints, SQL-spezifisches Verhalten oder produktionsnahe Integrationsprüfungen.
+
 ---
 
 ## 📘 TAG 6 — Playwright + Blazor UI-Tests
 
+### 6.0 Was du heute lernst und warum
+
+Heute geht es um die oberste Spitze der Testpyramide: echte Browser- und UI-Tests. **Playwright** steuert den Browser, damit du prüfen kannst, was der Anwender wirklich sieht und tut. Im Blazor-Kontext bedeutet das zum Beispiel: Seiten aufrufen, Formulare befüllen, Warnungen sehen und UI-Zustände validieren.
+
+Wichtig ist dabei nicht nur das Tool selbst, sondern auch die Abgrenzung: UI-Tests sind wertvoll, aber teuer. Du lernst heute deshalb auch, **wann** Playwright sinnvoll ist und wann ein Service- oder Integrationstest die bessere Wahl bleibt.
+
 ### ⚠️ Wichtig: BDD ≠ nur UI-Tests
 
-Ein häufiger Fehler ist, BDD direkt mit UI-Tests gleichzusetzen. Das führt zu fragilen, wartungsintensiven Tests. Die richtige Schichtung sieht so aus:
+Ein häufiger Fehler ist, BDD direkt mit UI-Tests gleichzusetzen. Das führt zu fragilen, wartungsintensiven Tests. Erinnere dich an die **Test-Pyramide** aus der Kurseinleitung: E2E-Tests sind ~10% — das meiste Testverhalten gehört in Service- oder Integrationstests.
+
+Die konkrete Schichtung für diesen Kurs:
 
 ```
 Feature (Gherkin — business-lesbar)
@@ -1096,17 +1269,69 @@ UI Steps (optional, nur für echte E2E-Szenarien)
 
 🔴 **Falsch (alles in UI):** Browser öffnen → einloggen → Patient suchen → Formular ausfüllen → Button klicken → Warnung prüfen → Browser schließen. 30 Sekunden. Bricht bei jedem UI-Redesign.
 
-> **Faustregel:** Nur dann Playwright einsetzen, wenn das Szenario **explizit das Verhalten der UI selbst** prüft — z.B. dass die Warnung rot und oben auf der Seite erscheint, oder dass ein bestimmter Button deaktiviert wird.
+> **Faustregel:** Playwright einsetzen, wenn das Szenario **explizit das Verhalten der UI selbst** prüft — z.B. dass die Warnung rot und oben auf der Seite erscheint, oder dass ein bestimmter Button deaktiviert wird.
 
-### 6.1 Playwright Setup
+### 6.1 Vorbedingung: Es muss eine laufende Ziel-App geben
+
+Playwright testet **keine Feature-Datei direkt** und auch **kein Page Object direkt**. Playwright steuert immer eine echte laufende Anwendung im Browser.
+
+Für diesen Kurs ist die Ziel-App eine kleine Demo-Blazor-App mit stabilen `data-testid`-Attributen:
+
+```
+MedTech/
+├── MedTech.Tests/   ← Reqnroll + Playwright Tests
+└── MedTech.App/     ← laufende Blazor-Demo-App als Testziel
+```
+
+Die Kette sieht so aus:
+
+```
+BlazerUITests.feature
+  ↓
+PatientenakteUISteps.cs
+  ↓
+PatientenlistePage.cs / RezeptPage.cs
+  ↓
+laufende Blazor-App unter /patienten
+```
+
+Das bedeutet konkret:
+
+- `BlazerUITests.feature` beschreibt das gewünschte Verhalten.
+- `PatientenakteUISteps.cs` übersetzt die Gherkin-Schritte in Code.
+- `PatientenlistePage.cs` kapselt Browser-Interaktionen.
+- `MedTech.App` ist die reale Oberfläche, die im Browser geöffnet wird.
+
+Wenn die Ziel-App nicht läuft, schlägt Playwright mit `ERR_CONNECTION_REFUSED` fehl. Das ist kein Reqnroll-Problem, sondern bedeutet schlicht: **Es gibt nichts, womit der Browser sprechen kann.**
+
+### 6.2 Demo-App starten
+
+```bash
+# Terminal 1: Blazor-Demo-App starten
+dotnet run --project MedTech.App/MedTech.App.csproj
+
+# Optional: andere Basis-URL für die Tests setzen
+set MEDTECH_UI_BASE_URL=http://localhost:3000
+
+# Terminal 2: Browser-Tests ausführen
+dotnet test MedTech.Tests/MedTech.Tests.csproj --filter "Category=browser"
+```
+
+Im Browser kannst du die Zielseite auch manuell öffnen:
+
+```text
+http://localhost:3000/patienten
+```
+
+### 6.3 Playwright Setup
 
 ```bash
 # Nach dem Build: Playwright-Browser herunterladen
-dotnet build
-pwsh bin/Debug/net8.0/playwright.ps1 install chromium
+dotnet build MedTech.Tests/MedTech.Tests.csproj
+powershell -File MedTech.Tests/bin/Debug/net8.0/playwright.ps1 install chromium
 ```
 
-### 6.2 Page Object Model für Blazor
+### 6.4 Page Object Model für Blazor
 
 ```csharp
 // Pages/BasePage.cs
@@ -1269,7 +1494,7 @@ public class RezeptPage : BasePage
 }
 ```
 
-### 6.3 Playwright-Hooks für Blazor
+### 6.5 Playwright-Hooks für Blazor
 
 ```csharp
 // Hooks/PlaywrightHooks.cs
@@ -1288,7 +1513,9 @@ public class PlaywrightHooks
     private IBrowserContext? _browserContext;
     private IPage? _page;
 
-    private const string AppUrl = "https://localhost:5001"; // Blazor-App URL
+    private static readonly string AppUrl =
+      Environment.GetEnvironmentVariable("MEDTECH_UI_BASE_URL")?.TrimEnd('/')
+      ?? "http://localhost:3000";
 
     public PlaywrightHooks(IObjectContainer container, ScenarioContext context)
     {
@@ -1343,7 +1570,7 @@ public class PlaywrightHooks
 }
 ```
 
-### 6.4 Vollständige UI-Steps für Blazor
+### 6.6 Vollständige UI-Steps für Blazor
 
 ```csharp
 // StepDefinitions/PatientenakteUISteps.cs
@@ -1406,9 +1633,21 @@ public class PatientenakteUISteps
 }
 ```
 
+### 6.7 Tageszusammenfassung
+
+Heute hast du gelernt, wie UI-Tests mit Playwright aufgebaut werden und warum Page Objects helfen, Browserlogik sauber von fachlichen Schritten zu trennen.
+
+Mindestens genauso wichtig: Du hast die Rolle von UI-Tests innerhalb der Testpyramide eingeordnet. Nicht alles gehört in den Browser, sondern nur das Verhalten, das wirklich in der Oberfläche verifiziert werden muss.
+
 ---
 
 ## 📘 TAG 7 — Mini-Projekt 1: Vollständige Patientenakte
+
+### 7.0 Was du heute lernst und warum
+
+Heute setzt du mehrere Kursbausteine gemeinsam ein. Das Mini-Projekt ist bewusst praxisnah aufgebaut: Du kombinierst Feature-Dateien, Step Definitions, Hooks, Datenhaltung und optional UI-Schritte zu einem zusammenhängenden Testpaket rund um die Patientenakte.
+
+Der Zweck dieses Tages ist Transfer. Du sollst nicht nur einzelne Techniken kennen, sondern erleben, wie sie zusammenwirken, wenn ein echtes fachliches Feature in Tests übersetzt wird.
 
 ### Aufgabe
 
@@ -1475,9 +1714,21 @@ MedTech.Tests/
     └── PlaywrightHooks.cs              ← Browser Setup
 ```
 
+### 7.1 Tageszusammenfassung
+
+Heute hast du ein vollständigeres Fachfeature in Teilbereiche zerlegt und gesehen, wie Unit-, Integrations- und UI-Anteile sinnvoll zusammenkommen.
+
+Der zentrale Lerneffekt dieses Tages ist Architekturverständnis: Gute Testlösungen entstehen nicht aus einem einzelnen Testtyp, sondern aus sauber kombinierten Schichten mit klarer Verantwortung.
+
 ---
 
 ## 📘 TAG 8 — API-Testing
+
+### 8.0 Was du heute lernst und warum
+
+Heute prüfst du das Verhalten des Systems über seine HTTP-Schnittstellen. API-Tests sind wichtig, weil sie Geschäftsverhalten und Systemintegration abdecken, ohne die zusätzliche Fragilität von Browser-Tests mitzubringen.
+
+Du lernst an diesem Tag, wie Authentifizierung, Statuscodes, Response-Inhalte und Sicherheitsanforderungen testbar gemacht werden. Gerade in MedTech ist das relevant, weil externe Systeme, Rollenmodelle und Datenschutzregeln oft über APIs abgesichert werden.
 
 ### 8.1 MedTech REST API Feature
 
@@ -1655,9 +1906,66 @@ public class ApiSteps
 }
 ```
 
+### 8.3 Lokale API-Tests ohne externen Server (WebApplicationFactory)
+
+Das obige Beispiel sendet HTTP-Anfragen an `https://api.medtech.de/v1` — das funktioniert nur, wenn dieser Server läuft. Für vollständig isolierte Tests ohne Netzwerkabhängigkeit bietet `Microsoft.AspNetCore.Mvc.Testing` die `WebApplicationFactory`:
+
+```csharp
+// Startet die Blazor-/API-App im selben Testprozess — kein externer Server nötig
+using Microsoft.AspNetCore.Mvc.Testing;
+
+[Binding]
+public class LocalApiSteps
+{
+    private readonly HttpClient _client;
+
+    public LocalApiSteps(WebApplicationFactory<Program> factory)
+    {
+        _client = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                // Echte DB-Registrierung entfernen, InMemory einhängen:
+                services.AddDbContext<MedTechDbContext>(opt =>
+                    opt.UseInMemoryDatabase($"ApiTest_{Guid.NewGuid()}"));
+            });
+        }).CreateClient();
+    }
+
+    [When(@"I send GET ""(.*)""")]
+    public async Task WennGetAnfrage(string pfad)
+    {
+        _antwort = await _client.GetAsync(pfad);
+    }
+}
+```
+
+**Vergleich der beiden Ansätze:**
+
+| | RestSharp (externe URL) | WebApplicationFactory |
+|--|------------------------|-----------------------|
+| Server nötig? | ✅ Ja | ❌ Nein |
+| Lernaufwand | Niedrig | Mittel |
+| Isolation | Gering | Hoch |
+| Geeignet für | Manuelle API-Tests | CI/CD, vollautomatisch |
+
+> **Für diesen Kurs:** RestSharp mit externer URL ist einfacher zu verstehen. `WebApplicationFactory` ist die Production-grade Alternative — zeig im Interview, dass du sie kennst.
+
+### 8.4 Tageszusammenfassung
+
+Heute hast du gelernt, wie API-Tests Fachverhalten, Sicherheitsregeln und Datenflüsse auf einer stabileren Schicht als im UI prüfen können.
+
+Du hast außerdem gesehen, dass gute API-Tests nicht nur Statuscodes kontrollieren, sondern auch Rollen, Datenschutz, Response-Inhalte und Seiteneffekte in der Datenbank verifizieren.
+
 ---
 
 ## 📘 TAG 9 — Reporting & CI/CD
+
+### 9.0 Was du heute lernst und warum
+
+Heute geht es nicht mehr nur um einzelne Tests, sondern um den Betrieb einer Test-Suite im Team. **Reporting** macht Testergebnisse nachvollziehbar, auffindbar und auditierbar. **CI/CD** sorgt dafür, dass Tests automatisiert bei Änderungen, Pull Requests oder nach Zeitplan laufen.
+
+Das ist in MedTech besonders wichtig, weil Testnachweise häufig längerfristig verfügbar sein müssen und unterschiedliche Testarten getrennt steuerbar sein sollten, etwa schnelle Smoke-Tests, Browser-Tests und regulatorische Prüfungen.
 
 ### 9.1 Allure Reports (empfohlen für MedTech)
 
@@ -1812,9 +2120,21 @@ jobs:
         retention-days: 365  # MDR: Aufbewahrungspflicht
 ```
 
+### 9.3 Tageszusammenfassung
+
+Heute hast du verstanden, warum Testautomatisierung erst dann teamtauglich wird, wenn Ergebnisse sichtbar, archiviert und reproduzierbar ausgeführt werden können.
+
+Du hast außerdem gelernt, wie CI/CD Testarten trennt, Reports erzeugt und regulatorisch wichtige Ergebnisse langfristig bereitstellen kann.
+
 ---
 
 ## 📘 TAG 10 — Mini-Projekt 2: E2E Rezept-Workflow
+
+### 10.0 Was du heute lernst und warum
+
+Heute verbindest du mehrere Ebenen zu einem echten End-to-End-Ablauf: UI, API und Audit-Log. Der Fokus liegt darauf zu verstehen, wie ein fachlich kritischer Prozess vom Einstieg im Frontend bis zur technischen Nachverifikation durchgängig getestet werden kann.
+
+Dieser Tag ist bewusst anspruchsvoll. Er zeigt dir, wie teuer, aber auch wie aussagekräftig E2E-Tests sein können, wenn sie gezielt für besonders wichtige Workflows eingesetzt werden.
 
 ### Vollständiger End-to-End-Test: Arzt verschreibt Medikament
 
@@ -1874,9 +2194,21 @@ Feature: Vollständiger Rezept-Workflow (E2E)
     And the blocked attempt should be logged in the audit trail
 ```
 
+### 10.1 Tageszusammenfassung
+
+Heute hast du gesehen, wie ein geschäftskritischer Workflow durch mehrere Systemgrenzen hinweg getestet wird: von der UI über die API bis zur Auditierung.
+
+Damit ist auch klar geworden, warum solche Tests sparsam eingesetzt werden sollten: Sie liefern starke Absicherung für zentrale Abläufe, sind aber deutlich aufwendiger als Unit- oder Integrationstests.
+
 ---
 
 ## 📘 TAG 11 — Best Practices & Profitipps
+
+### 11.0 Was du heute lernst und warum
+
+Heute geht es um Einordnung und Qualitätssicherung deiner bisherigen Arbeit. Best Practices helfen dir dabei, nicht nur funktionierende Tests zu schreiben, sondern Tests, die auch nach Wochen und Monaten noch verständlich, robust und wartbar bleiben.
+
+Der Tag bündelt typische Fehlerbilder, sinnvolle Architekturentscheidungen und pragmatische Regeln für den Alltag. Damit bekommst du einen Rahmen, wie du künftige Tests schneller bewerten und verbessern kannst.
 
 ### 11.1 ✅ Do's — Gutes BDD in MedTech
 
@@ -2068,6 +2400,12 @@ FORTGESCHRITTEN (Woche 1.5 — Überblick reicht):
 □ CI/CD: Unit-Tests, Browser-Tests und Compliance-Tests getrennt
 □ Testcontainers als nächsten Schritt nach InMemory kennen
 ```
+
+### 11.9 Tageszusammenfassung
+
+Heute hast du die wichtigsten Leitplanken für gute BDD- und Testautomatisierung im MedTech-Kontext gesammelt: lesbare Szenarien, klare Testschichten, sinnvolle Abstraktion und realistische Werkzeugeinschätzung.
+
+Damit schließt der Kurs nicht nur mit neuen Techniken ab, sondern mit einem Bewertungsmaßstab: Du kannst künftig besser entscheiden, **welcher Testtyp wann sinnvoll ist** und woran du gute von fragilen Tests unterscheidest.
 
 ---
 
