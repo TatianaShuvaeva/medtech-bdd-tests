@@ -27,4 +27,11 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapGet("/api/rezepte", (MedTechDemoService svc) => Results.Ok(svc.HoleRezepte()));
+app.MapDelete("/api/rezepte/reset", (MedTechDemoService svc) =>
+{
+    svc.ResetRezepte();
+    return Results.NoContent();
+});
+
 app.Run();

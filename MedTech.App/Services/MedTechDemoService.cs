@@ -10,6 +10,12 @@ public sealed class MedTechDemoService
         new("P004", "Maria Schmidt", [])
     ];
 
+    private readonly List<AusgestelltesRezept> _ausgestellteRezepte = [];
+
+    public IReadOnlyList<AusgestelltesRezept> HoleRezepte() => _ausgestellteRezepte.AsReadOnly();
+
+    public void ResetRezepte() => _ausgestellteRezepte.Clear();
+
     public IReadOnlyList<DemoPatient> SuchePatienten(string? suchbegriff)
     {
         if (string.IsNullOrWhiteSpace(suchbegriff))
@@ -45,6 +51,15 @@ public sealed class MedTechDemoService
                 null);
         }
 
+        var rezept = new AusgestelltesRezept(
+            patient.PatientId,
+            patient.Name,
+            medikament,
+            dosierung,
+            DateTime.UtcNow);
+
+        _ausgestellteRezepte.Add(rezept);
+
         return new RezeptPruefung(
             true,
             null,
@@ -60,3 +75,10 @@ public sealed record RezeptPruefung(
     string? AllergieWarnung,
     string WarnungSchweregrad,
     string? Erfolgsmeldung);
+
+public sealed record AusgestelltesRezept(
+    string PatientId,
+    string PatientName,
+    string Medikament,
+    string Dosierung,
+    DateTime AusgestelltAmUtc);
