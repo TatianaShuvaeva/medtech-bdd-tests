@@ -1,7 +1,9 @@
 using Reqnroll;
 using Reqnroll.BoDi;
 using Microsoft.EntityFrameworkCore;
-using MedTech.Tests.Infrastructure;
+using MedTech.Common.Data;
+using MedTech.Common.Models;
+using MedTech.Common.Services;
 
 namespace MedTech.Tests.Hooks;
 
@@ -10,7 +12,7 @@ public sealed class DatabaseHooks
 {
     private readonly IObjectContainer _container;
     private readonly ScenarioContext _scenarioContext;
-    private TestDbContext? _dbContext;
+    private MedTechDbContext? _dbContext;
     private string? _dbName;
 
     public DatabaseHooks(IObjectContainer container, ScenarioContext scenarioContext)
@@ -31,11 +33,11 @@ public sealed class DatabaseHooks
     {
         _dbName = $"MedTechTest_{Guid.NewGuid()}";
 
-        var options = new DbContextOptionsBuilder<TestDbContext>()
+        var options = new DbContextOptionsBuilder<MedTechDbContext>()
             .UseInMemoryDatabase(_dbName)
             .Options;
 
-        _dbContext = new TestDbContext(options);
+        _dbContext = new MedTechDbContext(options);
         _dbContext.Database.EnsureCreated();
 
         _container.RegisterInstanceAs(_dbContext);

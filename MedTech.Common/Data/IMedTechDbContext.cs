@@ -1,6 +1,7 @@
+using MedTech.Common.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace MedTech.Tests.Infrastructure;
+namespace MedTech.Common.Data;
 
 /// <summary>
 /// Dependency Inversion: RezeptService hängt von dieser Abstraktion ab,

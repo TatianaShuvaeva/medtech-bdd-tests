@@ -1,5 +1,7 @@
 using System.Globalization;
 using FluentAssertions;
+using MedTech.Common.Data;
+using MedTech.Common.Models;
 using MedTech.Tests.Infrastructure;
 using Reqnroll;
 
@@ -9,9 +11,9 @@ namespace MedTech.Tests.StepDefinitions;
 public class PatientenakteSteps
 {
     private readonly ScenarioContext _context;
-    private readonly TestDbContext _db;
+    private readonly MedTechDbContext _db;
 
-    public PatientenakteSteps(ScenarioContext context, TestDbContext db)
+    public PatientenakteSteps(ScenarioContext context, MedTechDbContext db)
     {
         _context = context;
         _db = db;

@@ -1,4 +1,4 @@
-namespace MedTech.Tests.Infrastructure;
+namespace MedTech.Common.Models;
 
 // Modelle sind in Models/ ausgelagert (Patient.cs, Arzt.cs, Rezept.cs, AuditLogEintrag.cs, Laborwert.cs)
 

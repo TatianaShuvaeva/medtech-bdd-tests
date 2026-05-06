@@ -1,3 +1,6 @@
+using MedTech.Common.Data;
+using MedTech.Common.Models;
+
 namespace MedTech.Tests.Infrastructure;
 
 public class AuditLogService

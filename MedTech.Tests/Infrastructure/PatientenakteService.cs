@@ -1,3 +1,5 @@
+using MedTech.Common.Models;
+
 namespace MedTech.Tests.Infrastructure;
 
 public class PatientenakteService

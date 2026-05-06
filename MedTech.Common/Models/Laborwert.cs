@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MedTech.Tests.Infrastructure;
+namespace MedTech.Common.Models;
 
 public class Laborwert
 {

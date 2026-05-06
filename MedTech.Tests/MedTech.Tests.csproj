@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MedTech.Common\MedTech.Common.csproj" /> 
     <ProjectReference Include="..\MedTech.App\MedTech.App.csproj" />
   </ItemGroup>
 

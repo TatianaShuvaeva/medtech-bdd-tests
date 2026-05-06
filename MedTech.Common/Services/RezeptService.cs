@@ -1,4 +1,7 @@
-namespace MedTech.Tests.Infrastructure;
+using MedTech.Common.Data;
+using MedTech.Common.Models;
+
+namespace MedTech.Common.Services;
 
 public class RezeptService
 {

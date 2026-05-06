@@ -1,4 +1,6 @@
 using FluentAssertions;
+using MedTech.Common.Data;
+using MedTech.Tests.Infrastructure;
 using MedTech.Tests.Pages;
 using Reqnroll;
 
@@ -10,12 +12,16 @@ public class PatientenakteUISteps
     private readonly PatientenlistePage _patientenlistePage;
     private readonly RezeptPage _rezeptPage;
     private readonly ScenarioContext _context;
+    private readonly MedTechDbContext _db;
+
+
 
     public PatientenakteUISteps(
         PatientenlistePage patientenlistePage,
         RezeptPage rezeptPage,
-        ScenarioContext context)
+        ScenarioContext context, MedTechDbContext db)
     {
+        _db = db;
         _patientenlistePage = patientenlistePage;
         _rezeptPage = rezeptPage;
         _context = context;
@@ -45,12 +51,16 @@ public class PatientenakteUISteps
     [Then(@"sollte die Patientenakte angezeigt werden")]
     public async Task DannSolltePatientenakteAngezeigtWerden()
     {
+        // Arrange
         (await _patientenlistePage.AnzahlSuchergebnisse())
             .Should().BeGreaterThan(0, "Es sollte mindestens ein Suchergebnis geben");
 
         var gesuchterPatient = _context.Get<string>("GesuchterPatient");
+
+        // Act
         await _patientenlistePage.ÖffnePatientenakte(gesuchterPatient);
 
+        // Assert
         (await _patientenlistePage.IstPatientenakteGeöffnet())
             .Should().BeTrue("Die Patientenakte sollte geöffnet sein");
     }
@@ -72,6 +82,8 @@ public class PatientenakteUISteps
     [When(@"der Arzt ""(.*)"" in der UI verschreibt")]
     public async Task WennArztVerschreibtInUI(string medikament)
     {
+        _context["Medikament"] = medikament;
+
         await _rezeptPage.GibeMedikamentEin(medikament);
         await _rezeptPage.GibeDosierungEin("2x täglich");
         await _rezeptPage.KlickeVerschreiben();
@@ -103,5 +115,31 @@ public class PatientenakteUISteps
     {
         (await _rezeptPage.IstAllergieWarnungSichtbar())
             .Should().BeFalse("Es sollte keine Allergie-Warnung angezeigt werden");
+    }
+
+    [Then(@"in der Datenbank korrekt gespeichert ist ")]
+    public async Task DannSollteInDatenbankKorrektGespeichertSein()
+    {
+        var gesuchterPatientId = _context.Get<int>("GesuchterPatientId");
+        var medikament = _context.Get<string>("Medikament");
+
+        var eintrag = _db.Rezepte.FirstOrDefault(r =>
+            r.Medikament == medikament
+                && r.PatientIdFk == gesuchterPatientId
+                && r.Dosierung == "2x täglich");
+
+        eintrag.Should().NotBeNull("Das Rezept sollte in der Datenbank korrekt gespeichert sein");
+    }
+
+    [Then(@"ein Audit-Log-Eintrag in der Datenbank vorhanden ist")]
+    public async Task DannSollteAuditLogEintragInDatenbankVorhandenSein()
+    {
+        var gesuchterPatientId = _context.Get<int>("GesuchterPatientId");
+        var medikament = _context.Get<string>("Medikament");
+
+        var eintrag = _db.AuditLog.FirstOrDefault(r =>
+                r.Benutzer == gesuchterPatientId.ToString());
+
+        eintrag.Should().NotBeNull("Das Rezept sollte in der Datenbank korrekt gespeichert sein");
     }
 }

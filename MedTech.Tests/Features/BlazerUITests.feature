@@ -34,3 +34,5 @@ Funktionalität: Blazor UI-Tests (Playwright)
 		Und der Arzt "Ibuprofen" in der UI verschreibt
 		Dann keine Allergie-Warnung sollte erscheinen
 		Und eine Erfolgsmeldung sollte in der UI erscheinen
+		Und die Verschreibung für "Max Müller" mit "Ibuprofen" in der Datenbank gespeichert ist
+		Und ein Audit-Log-Eintrag für die Verschreibung vorhanden ist

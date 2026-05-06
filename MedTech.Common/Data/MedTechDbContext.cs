@@ -1,12 +1,13 @@
+using MedTech.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace MedTech.Tests.Infrastructure;
+namespace MedTech.Common.Data;
 
-public class TestDbContext : DbContext, IMedTechDbContext
+public class MedTechDbContext : DbContext, IMedTechDbContext
 {
-    public TestDbContext(DbContextOptions<TestDbContext> options) : base(options) { }
+    public MedTechDbContext(DbContextOptions<MedTechDbContext> options) : base(options) { }
 
     public DbSet<Arzt> Aerzte => Set<Arzt>();
     public DbSet<Patient> Patienten => Set<Patient>();

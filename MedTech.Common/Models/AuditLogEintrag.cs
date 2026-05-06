@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MedTech.Tests.Infrastructure;
+namespace MedTech.Common.Models;
 
 /// <summary>
 /// MDR-konformer Audit-Log-Eintrag: jede klinisch relevante Aktion wird hier protokolliert.
