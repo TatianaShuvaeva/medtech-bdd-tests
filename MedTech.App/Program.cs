@@ -1,5 +1,7 @@
 using MedTech.App.Components;
-using MedTech.App.Services;
+using MedTech.Common.Data;
+using MedTech.Common.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 var appUrl = Environment.GetEnvironmentVariable("MEDTECH_APP_URL")
@@ -11,7 +13,14 @@ builder.WebHost.UseUrls(appUrl);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-builder.Services.AddSingleton<MedTechDemoService>();
+
+builder.Services.AddDbContext<MedTechDbContext>(options =>
+    options.UseInMemoryDatabase("MedTechProd"));
+
+builder.Services.AddScoped<IMedTechDbContext>(sp =>
+    (IMedTechDbContext)sp.GetRequiredService<MedTechDbContext>());
+
+builder.Services.AddScoped<RezeptService>();
 
 var app = builder.Build();
 
@@ -23,6 +32,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseAntiforgery();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<MedTechDbContext>();
+    MedTechDbSeeder.Seed(db);
+}
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

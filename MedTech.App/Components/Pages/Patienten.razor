@@ -1,6 +1,10 @@
 @page "/patienten"
+@using MedTech.Common.Data
+@using MedTech.Common.Models
+@using MedTech.Common.Services
 @rendermode InteractiveServer
-@inject MedTechDemoService DemoService
+@inject IMedTechDbContext Db
+@inject RezeptService RezeptService
 
 <PageTitle>Patientenliste</PageTitle>
 
@@ -96,19 +100,24 @@
 
 @code {
     private string suchbegriff = string.Empty;
-    private DemoPatient? aktuellerPatient;
+    private Patient? aktuellerPatient;
     private string medikament = string.Empty;
     private string dosierung = string.Empty;
     private string? allergieWarnung;
     private string warnungSchweregrad = string.Empty;
     private string? erfolgsMeldung;
 
-    private IReadOnlyList<DemoPatient> GefiltertePatienten()
+    private IReadOnlyList<Patient> GefiltertePatienten()
     {
-        return DemoService.SuchePatienten(suchbegriff);
+        if (string.IsNullOrWhiteSpace(suchbegriff))
+            return Db.Patienten.ToList();
+
+        return Db.Patienten
+            .Where(p => p.Name.Contains(suchbegriff))
+            .ToList();
     }
 
-    private void ÖffnePatient(DemoPatient patient)
+    private void ÖffnePatient(Patient patient)
     {
         aktuellerPatient = patient;
         medikament = string.Empty;
@@ -120,17 +129,16 @@
 
     private void Verschreiben()
     {
-        allergieWarnung = null;
-        erfolgsMeldung = null;
+        if (aktuellerPatient is null) return;
 
-        if (aktuellerPatient is null)
-        {
-            return;
-        }
+        var arzt = Db.Aerzte.FirstOrDefault(a => a.Name == "Dr. Müller");
+        if (arzt is null) return;
 
-        var ergebnis = DemoService.Verschreibe(aktuellerPatient.PatientId, medikament, dosierung);
-        allergieWarnung = ergebnis.AllergieWarnung;
+        var ergebnis = RezeptService.VerschreibeMedikament(aktuellerPatient, arzt, medikament, dosierung);
+        allergieWarnung = ergebnis.Warnung;
         warnungSchweregrad = ergebnis.WarnungSchweregrad;
-        erfolgsMeldung = ergebnis.Erfolgsmeldung;
+        erfolgsMeldung = ergebnis.ErfolgreichGespeichert
+            ? $"Rezept für {medikament} ({dosierung}) wurde erfolgreich ausgestellt."
+            : null;
     }
 }

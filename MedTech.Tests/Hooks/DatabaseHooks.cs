@@ -2,7 +2,6 @@ using Reqnroll;
 using Reqnroll.BoDi;
 using Microsoft.EntityFrameworkCore;
 using MedTech.Common.Data;
-using MedTech.Common.Models;
 using MedTech.Common.Services;
 
 namespace MedTech.Tests.Hooks;
@@ -41,7 +40,7 @@ public sealed class DatabaseHooks
         _dbContext.Database.EnsureCreated();
 
         _container.RegisterInstanceAs(_dbContext);
-        _container.RegisterInstanceAs(new RezeptService(_dbContext));
+        _container.RegisterInstanceAs(new RezeptService(_dbContext as IMedTechDbContext));
     }
 
     [BeforeScenario(Order = 1)]
