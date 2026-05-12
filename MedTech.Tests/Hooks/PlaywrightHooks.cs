@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
 using Microsoft.Playwright;
 using Reqnroll;
 using Reqnroll.BoDi;
@@ -9,10 +11,6 @@ namespace MedTech.Tests.Hooks;
 [Binding]
 public class PlaywrightHooks
 {
-    private static readonly SemaphoreSlim AppStartLock = new(1, 1);
-    private static Process? _appProcess;
-    private static bool _appStartedByTests;
-
     private readonly IObjectContainer _container;
     private readonly ScenarioContext _context;
 
@@ -21,9 +19,9 @@ public class PlaywrightHooks
     private IBrowserContext? _browserContext;
     private IPage? _page;
 
-    private static readonly string AppUrl =
-        Environment.GetEnvironmentVariable("MEDTECH_UI_BASE_URL")?.TrimEnd('/')
-        ?? "http://localhost:3000";
+    // Wird pro Szenario gestartet (kein statischer Zustand mehr)
+    private Process? _appProcess;
+    private string _appUrl = string.Empty;
 
     public PlaywrightHooks(IObjectContainer container, ScenarioContext context)
     {
@@ -31,70 +29,77 @@ public class PlaywrightHooks
         _context = context;
     }
 
+    /// <summary>
+    /// Startet die Demo-App pro Szenario auf einem freien Port und übergibt die SQLite-DB.
+    /// Wenn MEDTECH_UI_BASE_URL gesetzt ist, wird diese App direkt verwendet (Entwickler-Modus).
+    /// </summary>
     [BeforeScenario("browser", Order = 10)]
-    public static async Task DemoAppSicherstellen()
+    public async Task DemoAppSicherstellen()
     {
-        if (await IstAppErreichbar())
+        // Entwickler-Modus: extern gestartete App verwenden
+        var manualUrl = Environment.GetEnvironmentVariable("MEDTECH_UI_BASE_URL")?.TrimEnd('/');
+        if (!string.IsNullOrEmpty(manualUrl))
         {
+            _appUrl = manualUrl;
+            _context["AppUrl"] = _appUrl;
+            Console.WriteLine($"[PlaywrightHooks] Verwende manuell gestartete App: {_appUrl}");
             return;
         }
 
-        await AppStartLock.WaitAsync();
-        try
+        // Pro-Szenario-Start: freien Port + SQLite-Pfad weitergeben
+        var port = FindFreePort();
+        _appUrl = $"http://localhost:{port}";
+        _context["AppUrl"] = _appUrl;
+
+        var projektPfad = FindeAppProjektPfad();
+        if (projektPfad is null)
         {
-            if (await IstAppErreichbar())
-            {
-                return;
-            }
-
-            var projektPfad = FindeAppProjektPfad();
-            if (projektPfad is null)
-            {
-                Assert.Fail("MedTech.App.csproj konnte für die Browser-Tests nicht gefunden werden.");
-                return;
-            }
-
-            Console.WriteLine($"Starte Demo-App automatisch: {projektPfad}");
-
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "dotnet",
-                Arguments = $"run --project \"{projektPfad}\" --no-launch-profile",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                WorkingDirectory = Path.GetDirectoryName(projektPfad) ?? AppContext.BaseDirectory
-            };
-
-            startInfo.Environment["MEDTECH_APP_URL"] = AppUrl;
-            startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
-
-            _appProcess = new Process { StartInfo = startInfo };
-            _appProcess.OutputDataReceived += (_, args) =>
-            {
-                if (!string.IsNullOrWhiteSpace(args.Data))
-                    Console.WriteLine($"[MedTech.App] {args.Data}");
-            };
-            _appProcess.ErrorDataReceived += (_, args) =>
-            {
-                if (!string.IsNullOrWhiteSpace(args.Data))
-                    Console.WriteLine($"[MedTech.App] {args.Data}");
-            };
-
-            _appProcess.Start();
-            _appProcess.BeginOutputReadLine();
-            _appProcess.BeginErrorReadLine();
-            _appStartedByTests = true;
-
-            var erreichbar = await WarteAufAppStart();
-            if (!erreichbar)
-                Assert.Fail($"Die Demo-App konnte nicht unter {AppUrl} gestartet werden.");
+            Assert.Fail("MedTech.App.csproj konnte für die Browser-Tests nicht gefunden werden.");
+            return;
         }
-        finally
+
+        Console.WriteLine($"[PlaywrightHooks] Starte App auf {_appUrl} (Projekt: {projektPfad})");
+
+        var startInfo = new ProcessStartInfo
         {
-            AppStartLock.Release();
+            FileName = "dotnet",
+            Arguments = $"run --project \"{projektPfad}\" --no-launch-profile",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = Path.GetDirectoryName(projektPfad) ?? AppContext.BaseDirectory
+        };
+
+        startInfo.Environment["MEDTECH_APP_URL"] = _appUrl;
+        startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
+
+        // SQLite-Datei für gemeinsame DB übergeben (gesetzt von DatabaseHooks für @browser-Szenarien)
+        if (_context.TryGetValue("DbPath", out var dbPathObj) && dbPathObj is string dbPath)
+        {
+            startInfo.Environment["MEDTECH_TEST_DB_PATH"] = dbPath;
+            Console.WriteLine($"[PlaywrightHooks] SQLite-DB: {dbPath}");
         }
+
+        _appProcess = new Process { StartInfo = startInfo };
+        _appProcess.OutputDataReceived += (_, args) =>
+        {
+            if (!string.IsNullOrWhiteSpace(args.Data))
+                Console.WriteLine($"[MedTech.App] {args.Data}");
+        };
+        _appProcess.ErrorDataReceived += (_, args) =>
+        {
+            if (!string.IsNullOrWhiteSpace(args.Data))
+                Console.WriteLine($"[MedTech.App] {args.Data}");
+        };
+
+        _appProcess.Start();
+        _appProcess.BeginOutputReadLine();
+        _appProcess.BeginErrorReadLine();
+
+        var erreichbar = await WarteAufAppStart(_appUrl);
+        if (!erreichbar)
+            Assert.Fail($"Die Demo-App konnte nicht unter {_appUrl} gestartet werden.");
     }
 
     [BeforeScenario("browser", Order = 20)]
@@ -116,13 +121,16 @@ public class PlaywrightHooks
 
         _page = await _browserContext.NewPageAsync();
 
-        // Page Objects im DI-Container registrieren
+        var appUrl = _context.Get<string>("AppUrl");
+
         _container.RegisterInstanceAs(_page);
-        _container.RegisterInstanceAs(new PatientenlistePage(_page, AppUrl));
+        _container.RegisterInstanceAs(new PatientenlistePage(_page, appUrl));
         _container.RegisterInstanceAs(new RezeptPage(_page));
     }
 
-    [AfterScenario("browser")]
+    // Order = 10 → läuft vor DatabaseHooks.DisposeScenarioDatabase (Order = 20),
+    // damit der App-Prozess die SQLite-Datei freigibt, bevor sie gelöscht wird.
+    [AfterScenario("browser", Order = 10)]
     public async Task NachBrowserSzenario()
     {
         // Bei Fehler: Screenshot speichern
@@ -141,58 +149,52 @@ public class PlaywrightHooks
         if (_browserContext != null) await _browserContext.CloseAsync();
         if (_browser != null) await _browser.CloseAsync();
         _playwright?.Dispose();
-    }
 
-    [AfterTestRun]
-    public static void DemoAppBeenden()
-    {
-        if (!_appStartedByTests || _appProcess is null)
+        // App-Prozess stoppen (nur wenn er von uns gestartet wurde)
+        if (_appProcess != null)
         {
-            return;
-        }
-
-        try
-        {
-            if (!_appProcess.HasExited)
+            try
             {
-                _appProcess.Kill(entireProcessTree: true);
-                _appProcess.WaitForExit(5000);
+                if (!_appProcess.HasExited)
+                {
+                    _appProcess.Kill(entireProcessTree: true);
+                    _appProcess.WaitForExit(5000);
+                }
+            }
+            finally
+            {
+                _appProcess.Dispose();
+                _appProcess = null;
             }
         }
-        finally
-        {
-            _appProcess.Dispose();
-            _appProcess = null;
-            _appStartedByTests = false;
-        }
     }
 
-    private static async Task<bool> WarteAufAppStart()
+    private static int FindFreePort()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        return port;
+    }
+
+    private static async Task<bool> WarteAufAppStart(string appUrl)
     {
         for (var versuch = 0; versuch < 30; versuch++)
         {
-            if (_appProcess is { HasExited: true })
-            {
-                return false;
-            }
-
-            if (await IstAppErreichbar())
-            {
+            if (await IstAppErreichbar(appUrl))
                 return true;
-            }
-
             await Task.Delay(1000);
         }
-
         return false;
     }
 
-    private static async Task<bool> IstAppErreichbar()
+    private static async Task<bool> IstAppErreichbar(string appUrl)
     {
         try
         {
             using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
-            using var response = await client.GetAsync($"{AppUrl}/patienten");
+            using var response = await client.GetAsync($"{appUrl}/patienten");
             return response.IsSuccessStatusCode;
         }
         catch
@@ -205,9 +207,7 @@ public class PlaywrightHooks
     {
         var envPfad = Environment.GetEnvironmentVariable("MEDTECH_UI_PROJECT_PATH");
         if (!string.IsNullOrWhiteSpace(envPfad) && File.Exists(envPfad))
-        {
             return envPfad;
-        }
 
         var kandidaten = new[]
         {

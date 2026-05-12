@@ -14,8 +14,19 @@ builder.WebHost.UseUrls(appUrl);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddDbContext<MedTechDbContext>(options =>
-    options.UseInMemoryDatabase("MedTechProd"));
+// Browser-Tests übergeben einen SQLite-Datei-Pfad, damit App und Test dieselbe DB teilen.
+// Ohne diese Variable läuft die App mit einer In-Memory-Datenbank (normaler Betrieb).
+var testDbPath = Environment.GetEnvironmentVariable("MEDTECH_TEST_DB_PATH");
+if (!string.IsNullOrEmpty(testDbPath))
+{
+    builder.Services.AddDbContext<MedTechDbContext>(options =>
+        options.UseSqlite($"Data Source={testDbPath}"));
+}
+else
+{
+    builder.Services.AddDbContext<MedTechDbContext>(options =>
+        options.UseInMemoryDatabase("MedTechProd"));
+}
 
 builder.Services.AddScoped<IMedTechDbContext>(sp =>
     (IMedTechDbContext)sp.GetRequiredService<MedTechDbContext>());

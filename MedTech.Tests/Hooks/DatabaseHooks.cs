@@ -33,9 +33,24 @@ public sealed class DatabaseHooks
         _dbName = $"MedTechTest_{Guid.NewGuid()}";
         _scenarioContext["DbName"] = _dbName;
 
-        var options = new DbContextOptionsBuilder<MedTechDbContext>()
-            .UseInMemoryDatabase(_dbName)
-            .Options;
+        DbContextOptions<MedTechDbContext> options;
+
+        // Browser-Tests starten die App als eigenen Prozess → In-Memory-DB kann nicht geteilt werden.
+        // Stattdessen SQLite-Datei verwenden, damit App und Test dieselbe DB lesen/schreiben.
+        if (_scenarioContext.ScenarioInfo.Tags.Contains("browser"))
+        {
+            var dbPath = Path.Combine(Path.GetTempPath(), $"medtech_test_{Guid.NewGuid()}.db");
+            _scenarioContext["DbPath"] = dbPath;
+            options = new DbContextOptionsBuilder<MedTechDbContext>()
+                .UseSqlite($"Data Source={dbPath}")
+                .Options;
+        }
+        else
+        {
+            options = new DbContextOptionsBuilder<MedTechDbContext>()
+                .UseInMemoryDatabase(_dbName)
+                .Options;
+        }
 
         _dbContext = new MedTechDbContext(options);
         _dbContext.Database.EnsureCreated();
@@ -63,7 +78,7 @@ public sealed class DatabaseHooks
         MedTechDbSeeder.Seed(_dbContext!);
     }
 
-    [AfterScenario]
+    [AfterScenario(Order = 20)]
     public void DisposeScenarioDatabase()
     {
         if (_scenarioContext.TestError is not null)
@@ -77,6 +92,12 @@ public sealed class DatabaseHooks
 
         _dbContext?.Dispose();
         _dbContext = null;
+
+        // SQLite-Datei aus Browser-Tests aufräumen (nach App- und Browser-Cleanup, Order = 20)
+        if (_scenarioContext.TryGetValue("DbPath", out var dbPathObj) && dbPathObj is string dbPath)
+        {
+            try { File.Delete(dbPath); } catch { /* Datei ggf. noch gesperrt – ignorieren */ }
+        }
     }
 
     [AfterTestRun]
