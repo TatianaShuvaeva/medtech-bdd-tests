@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +11,7 @@ namespace MedTech.Tests.Hooks;
 /// <summary>
 /// Startet die Blazor-App im Test-Prozess und überschreibt die DB-Registrierung
 /// mit der Test-InMemory-DB (damit App und Tests dieselbe DB teilen).
+/// Wird für Integrationstests ohne Browser verwendet.
 /// </summary>
 public class MedTechWebAppFactory : WebApplicationFactory<Program>
 {

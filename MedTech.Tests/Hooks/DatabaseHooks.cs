@@ -56,6 +56,13 @@ public sealed class DatabaseHooks
         Console.WriteLine($"InMemory-Datenbank: {_dbName}");
     }
 
+    // Browser-Tests brauchen Seed-Daten in der Test-DB (App läuft als separater Prozess)
+    [BeforeScenario("browser", Order = 2)]
+    public void SeedTestDatenbank()
+    {
+        MedTechDbSeeder.Seed(_dbContext!);
+    }
+
     [AfterScenario]
     public void DisposeScenarioDatabase()
     {
