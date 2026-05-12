@@ -31,6 +31,7 @@ public sealed class DatabaseHooks
     public void CreateScenarioDatabase()
     {
         _dbName = $"MedTechTest_{Guid.NewGuid()}";
+        _scenarioContext["DbName"] = _dbName;
 
         var options = new DbContextOptionsBuilder<MedTechDbContext>()
             .UseInMemoryDatabase(_dbName)
@@ -40,7 +41,8 @@ public sealed class DatabaseHooks
         _dbContext.Database.EnsureCreated();
 
         _container.RegisterInstanceAs(_dbContext);
-        _container.RegisterInstanceAs(new RezeptService(_dbContext as IMedTechDbContext));
+        _container.RegisterInstanceAs<IMedTechDbContext>(_dbContext);
+        _container.RegisterInstanceAs(new RezeptService(_dbContext));
     }
 
     [BeforeScenario(Order = 1)]
