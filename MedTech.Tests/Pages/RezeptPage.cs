@@ -30,7 +30,14 @@ public class RezeptPage : BasePage
     }
 
     public async Task<bool> IstAllergieWarnungSichtbar()
-        => await Page.Locator(AllergieWarnung).IsVisibleAsync();
+    {
+        try
+        {
+            await Page.Locator(AllergieWarnung).WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
+            return true;
+        }
+        catch { return false; }
+    }
 
     public async Task<bool> IstWechselwirkungWarnungSichtbar()
         => await Page.Locator(WechselwirkungWarnung).IsVisibleAsync();
@@ -42,7 +49,14 @@ public class RezeptPage : BasePage
         => await LeseText(WarnungSchweregrad);
 
     public async Task<bool> IstErfolgsMeldungSichtbar()
-        => await Page.Locator(ErfolgsMeldung).IsVisibleAsync();
+    {
+        try
+        {
+            await Page.Locator(ErfolgsMeldung).WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
+            return true;
+        }
+        catch { return false; }
+    }
 
     public async Task<byte[]> MacheScreenshot()
         => await Page.ScreenshotAsync(new() { FullPage = true });
