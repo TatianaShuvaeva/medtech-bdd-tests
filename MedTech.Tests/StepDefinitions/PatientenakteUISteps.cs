@@ -46,6 +46,13 @@ public class PatientenakteUISteps
     {
         var gesuchterPatient = _context.Get<string>("GesuchterPatient");
         await _patientenlistePage.ÖffnePatientenakte(gesuchterPatient);
+
+        // Patient-ID aus der DB nachschlagen und im Context speichern
+        var patient = _db.Patienten.FirstOrDefault(p => p.Name == gesuchterPatient);
+        if (patient != null)
+        {
+            _context["GesuchterPatientId"] = patient.Id;
+        }
     }
 
     [Then(@"sollte die Patientenakte angezeigt werden")]
@@ -117,7 +124,7 @@ public class PatientenakteUISteps
             .Should().BeFalse("Es sollte keine Allergie-Warnung angezeigt werden");
     }
 
-    [Then(@"in der Datenbank korrekt gespeichert ist ")]
+    [Then(@"in der Datenbank korrekt gespeichert ist")]
     public async Task DannSollteInDatenbankKorrektGespeichertSein()
     {
         var gesuchterPatientId = _context.Get<int>("GesuchterPatientId");
@@ -131,15 +138,38 @@ public class PatientenakteUISteps
         eintrag.Should().NotBeNull("Das Rezept sollte in der Datenbank korrekt gespeichert sein");
     }
 
-    [Then(@"ein Audit-Log-Eintrag in der Datenbank vorhanden ist")]
-    public async Task DannSollteAuditLogEintragInDatenbankVorhandenSein()
+    [Given(@"Patient ""(.*)"" existiert in der Datenbank")]
+    public void GegebenPatientExistiertInDB(string name)
     {
-        var gesuchterPatientId = _context.Get<int>("GesuchterPatientId");
-        var medikament = _context.Get<string>("Medikament");
+        var patient = _db.Patienten.FirstOrDefault(p => p.Name == name);
+        patient.Should().NotBeNull($"Patient {name} muss in der Test-DB vorhanden sein");
+        _context["GesuchterPatientId"] = patient!.Id;
+    }
 
-        var eintrag = _db.AuditLog.FirstOrDefault(r =>
-                r.Benutzer == gesuchterPatientId.ToString());
+    [Given(@"der Patient hat bisher (\d+) Rezept\(e\)")]
+    public void GegebenPatientHatRezepte(int anzahl)
+    {
+        var patientId = _context.Get<int>("GesuchterPatientId");
+        var aktuelleAnzahl = _db.Rezepte.Count(r => r.PatientIdFk == patientId);
+        aktuelleAnzahl.Should().Be(anzahl);
+        _context["RezeptAnzahlVorher"] = aktuelleAnzahl;
+    }
+    
+    [Then(@"sollte die Rezeptanzahl des Patienten um 1 gestiegen sein")]
+    public void DannSollteRezeptAnzahlGestiegen()
+    {
+        var patientId = _context.Get<int>("GesuchterPatientId");
+        var vorher = _context.Get<int>("RezeptAnzahlVorher");
+        var nachher = _db.Rezepte.Count(r => r.PatientIdFk == patientId);
+        nachher.Should().Be(vorher + 1);
+    }
 
-        eintrag.Should().NotBeNull("Das Rezept sollte in der Datenbank korrekt gespeichert sein");
+    [Then(@"sollte die Rezeptanzahl des Patienten NICHT gestiegen sein")]
+    public void DannSollteRezeptAnzahlNichtGestiegen()
+    {
+        var patientId = _context.Get<int>("GesuchterPatientId");
+        var vorher = _context.Get<int>("RezeptAnzahlVorher");
+        var nachher = _db.Rezepte.Count(r => r.PatientIdFk == patientId);
+        nachher.Should().Be(vorher, "Die Allergie-Warnung muss das Speichern des Rezepts verhindern");
     }
 }

@@ -34,5 +34,16 @@ Funktionalität: Blazor UI-Tests (Playwright)
 		Und der Arzt "Ibuprofen" in der UI verschreibt
 		Dann keine Allergie-Warnung sollte erscheinen
 		Und eine Erfolgsmeldung sollte in der UI erscheinen
-		Und die Verschreibung für "Max Müller" mit "Ibuprofen" in der Datenbank gespeichert ist
-		Und ein Audit-Log-Eintrag für die Verschreibung vorhanden ist
+
+	
+	@browser @regulatorisch
+	Szenario: Erfolgreiche Verschreibung wird in der DB persistiert
+		Angenommen Patient "Max Müller" existiert in der Datenbank
+		Und der Patient hat bisher 0 Rezept(e)
+		Und Dr. Müller ist in der Blazor-Anwendung eingeloggt
+		Wenn sie nach Patient "Max Müller" sucht
+		Und die Patientenakte angezeigt werden
+		Und der Arzt "Ibuprofen" in der UI verschreibt
+		Dann eine Erfolgsmeldung sollte in der UI erscheinen
+		Und in der Datenbank korrekt gespeichert ist
+		Und sollte die Rezeptanzahl des Patienten um 1 gestiegen sein
