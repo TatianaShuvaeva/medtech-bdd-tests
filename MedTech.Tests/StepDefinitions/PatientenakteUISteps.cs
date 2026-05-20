@@ -1,6 +1,6 @@
 using FluentAssertions;
 using MedTech.Common.Data;
-using MedTech.Tests.Infrastructure;
+using MedTech.Common.Services;
 using MedTech.Tests.Pages;
 using Reqnroll;
 

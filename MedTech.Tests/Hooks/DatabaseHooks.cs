@@ -58,6 +58,7 @@ public sealed class DatabaseHooks
         _container.RegisterInstanceAs(_dbContext);
         _container.RegisterInstanceAs<IMedTechDbContext>(_dbContext);
         _container.RegisterInstanceAs(new RezeptService(_dbContext));
+        _container.RegisterInstanceAs(new AuditLogService(_dbContext));
     }
 
     [BeforeScenario(Order = 1)]

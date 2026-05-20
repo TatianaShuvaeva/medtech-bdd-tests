@@ -2,7 +2,7 @@ using System.Globalization;
 using FluentAssertions;
 using MedTech.Common.Data;
 using MedTech.Common.Models;
-using MedTech.Tests.Infrastructure;
+using MedTech.Common.Services;
 using Reqnroll;
 
 namespace MedTech.Tests.StepDefinitions;

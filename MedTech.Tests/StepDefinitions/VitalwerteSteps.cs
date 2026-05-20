@@ -1,6 +1,6 @@
 using Reqnroll;
 using FluentAssertions;
-using MedTech.Tests.Infrastructure;
+using MedTech.Common.Services;
 
 namespace MedTech.Tests.StepDefinitions;
 

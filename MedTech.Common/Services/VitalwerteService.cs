@@ -1,4 +1,4 @@
-namespace MedTech.Tests.Infrastructure;
+namespace MedTech.Common.Services;
 
 public class VitalwerteService
 {
