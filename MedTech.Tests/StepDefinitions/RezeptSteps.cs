@@ -1,7 +1,6 @@
 using Reqnroll;
 using NUnit.Framework;
 using FluentAssertions;
-using MedTech.Tests.Infrastructure;
 using MedTech.Common.Data;
 using MedTech.Common.Models;
 using MedTech.Common.Services;
@@ -14,16 +13,18 @@ public class RezeptSteps
     // Reqnroll's Dependency Injection
     private readonly ScenarioContext _context;
     private readonly MedTechDbContext _db;
+    private readonly RezeptService _rezeptService;
     private readonly AuditLogService _auditLogService;
 
     // Lokaler State des Szenarios
     private string _warnung = string.Empty;
     private bool _rezeptGespeichert = false;
 
-    public RezeptSteps(ScenarioContext context, MedTechDbContext db)
+    public RezeptSteps(ScenarioContext context, MedTechDbContext db, RezeptService rezeptService, AuditLogService auditLogService)
     {
         _context = context;
         _db = db;
+        _rezeptService = rezeptService;
         _auditLogService = new AuditLogService(_db);
     }
 
